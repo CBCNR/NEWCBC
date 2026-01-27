@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Judicial Approval Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --primary: #1f3a5f;
+      --secondary: #4f6d8c;
+      --accent: #3b82f6;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --success: #16a34a;
+      --danger: #dc2626;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 24px 32px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    header p {
+      margin-top: 6px;
+      opacity: 0.85;
+    }
+
+    main {
+      padding: 32px;
+      max-width: 1300px;
+      margin: auto;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+      border: 1px solid var(--border);
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 18px;
+      color: var(--primary);
+    }
+
+    .stat {
+      margin-top: 12px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .stat strong {
+      color: var(--text);
+    }
+
+    .rate {
+      font-size: 36px;
+      font-weight: 700;
+      margin: 16px 0;
+      color: var(--accent);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #eef2ff;
+      color: var(--accent);
+    }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>Judicial Approval Dashboard</h1>
+  <p>All judges • all jurisdictions • real approval data</p>
+</header>
+
+<main>
+  <div id="dashboard" class="grid"></div>
+</main>
+
+<footer>
+  Built from full judicial dataset • No records omitted
+</footer>
+
+<script>
+/* =========================================================
+   🔹 PASTE YOUR FULL DATASET HERE
+   ========================================================= */
+
+const entries = [
+  /*
+  Example format ONLY — replace with your full list
+
+  {
+    judge: "Abigail Howard",
+    jurisdiction: "Hamlin County, SD",
+    approvals: 1,
+    denials: 0,
+    notes: "Approved first filing"
+  }
+  */
+];
+
+/* =========================================================
+   🔹 CORE LOGIC — NOTHING IS DROPPED
+   ========================================================= */
+
+function getStateFromJurisdiction(jurisdiction) {
+  if (!jurisdiction) return "UNKNOWN";
+  const match = jurisdiction.match(/,\s*([A-Z]{2})\b/);
+  return match ? match[1] : "UNKNOWN";
+}
+
+function buildStateDashboard(entries) {
+  const states = {};
+
+  entries.forEach(entry => {
+    const state = getStateFromJurisdiction(entry.jurisdiction);
+
+    if (!states[state]) {
+      states[state] = {
+        state,
+        judges: 0,
+        approvals: 0,
+        denials: 0,
+        entries: []
+      };
+    }
+
+    states[state].judges += 1;
+    states[state].approvals += entry.approvals || 0;
+    states[state].denials += entry.denials || 0;
+    states[state].entries.push(entry);
+  });
+
+  return states;
+}
+
+function renderDashboard() {
+  const dashboard = document.getElementById("dashboard");
+  const data = buildStateDashboard(entries);
+
+  const states = Object.values(data).sort((a, b) => {
+    const rateA = a.approvals / Math.max(1, a.approvals + a.denials);
+    const rateB = b.approvals / Math.max(1, b.approvals + b.denials);
+    return rateB - rateA;
+  });
+
+  states.forEach(state => {
+    const total = state.approvals + state.denials;
+    const rate = total > 0
+      ? Math.round((state.approvals / total) * 100)
+      : 0;
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <h2>${state.state}</h2>
+      <div class="rate">${rate}%</div>
+      <span class="badge">${state.judges} Judges</span>
+
+      <div class="stat"><strong>Approvals:</strong> ${state.approvals}</div>
+      <div class="stat"><strong>Denials:</strong> ${state.denials}</div>
+      <div class="stat"><strong>Total Records:</strong> ${state.entries.length}</div>
+    `;
+
+    dashboard.appendChild(card);
+  });
+}
+
+renderDashboard();
+</script>
+
+</body>
+</html>
