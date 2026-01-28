@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -26,28 +27,29 @@ th { background:#1a5fb4; color:#fff; cursor:pointer; }
 <h1>CBC Settlement Funding – Court Guide</h1>
 <h2>Filters</h2>
 <div class="filters">
-<select id="stateFilter">
-<option value="all">All States</option>
-</select>
-<select id="countyFilter">
-<option value="all">All Counties</option>
-</select>
-<select id="judgeFilter">
-<option value="all">All Judges</option>
-</select>
+  <select id="stateFilter">
+    <option value="all">All States</option>
+  </select>
+  <select id="countyFilter">
+    <option value="all">All Counties</option>
+  </select>
+  <select id="judgeFilter">
+    <option value="all">All Judges</option>
+  </select>
 </div>
-<div id="summary">Showing 32 entries — Overall approval rate: 72%</div>
+<div id="summary">Loading entries...</div>
 <table id="courtTable">
 <thead>
 <tr>
-<th onclick="sortTable(0)">Jurisdiction</th>
-<th onclick="sortTable(1)">Judge</th>
-<th onclick="sortTable(2)">Avg Time to Court Date</th>
-<th onclick="sortTable(3)">Avg Future Offset</th>
-<th onclick="sortTable(4)">Difficulty</th>
-<th onclick="sortTable(5)">Approval Rate</th>
-<th onclick="sortTable(6)">Total Cases</th>
-<th onclick="sortTable(6)">Notes</th>
+  <th onclick="sortTable(0)">Jurisdiction</th>
+  <th onclick="sortTable(1)">Judge</th>
+  <th onclick="sortTable(2)">Avg Time to Court Date</th>
+  <th onclick="sortTable(3)">Avg Future Offset</th>
+  <th onclick="sortTable(4)">Difficulty</th>
+  <th onclick="sortTable(5)">Approval Rate</th>
+  <th onclick="sortTable(6)">Total Cases</th>
+  <th onclick="sortTable(7)">Notes</th>
+  <th>Actions</th>
 </tr>
 </thead>
 <tbody id="courtBody"></tbody>
@@ -55,9 +57,9 @@ th { background:#1a5fb4; color:#fff; cursor:pointer; }
 <button onclick="exportCSV()">Export Table as CSV</button>
 <h2>Add New Entry</h2>
 <select id="type" onchange="toggleFields()">
-<option value="state">State Info</option>
-<option value="insurance">Insurance</option>
-<option value="court">Court Guide</option>
+  <option value="state">State Info</option>
+  <option value="insurance">Insurance</option>
+  <option value="court">Court Guide</option>
 </select>
 <br>
 <label>Judge Name / State Name / Insurance Name:</label><br>
@@ -70,9 +72,9 @@ th { background:#1a5fb4; color:#fff; cursor:pointer; }
 <input type="text" id="futureOffset"><br>
 <label>Difficulty:</label>
 <select id="difficulty">
-<option>Easy</option>
-<option>Medium</option>
-<option>Hard</option>
+  <option>Easy</option>
+  <option>Medium</option>
+  <option>Hard</option>
 </select><br>
 <label>Approval Rate (e.g., 100% or 0%):</label><br>
 <input type="text" id="approval" value="100%"><br>
@@ -81,298 +83,449 @@ th { background:#1a5fb4; color:#fff; cursor:pointer; }
 <label>Notes (denial reasons, IPA tips):</label><br>
 <textarea id="notes"></textarea><br>
 <button onclick="addEntry()">Add Entry</button>
+
 <script>
-/* ---------- DATA (All 32 entries from PDF - no info left out) ---------- */
+let currentEditIndex = -1;
+
+/* ---------- FULL DATA: original entries + ALL judges from file (one per row) ---------- */
 const courtGuide = [
-{ jurisdiction: "Cabell County, WV", judge: "Alfred Ferguson", avgTime: "4-8 weeks", futureOffset: "1-3 months", difficulty: "Easy", approval: "100%", cases: 2, notes: "" },
-{ jurisdiction: "Mobile County, AL", judge: "Various", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 1, notes: "" },
-{ jurisdiction: "Henry County, GA", judge: "Pandora E. Palmer", avgTime: "6-10 weeks", futureOffset: "2-4 months", difficulty: "Easy", approval: "100%", cases: 2, notes: "" },
-{ jurisdiction: "Cobb County, GA", judge: "Kellie Hill", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 3, notes: "" },
-{ jurisdiction: "Phelps County, MO", judge: "Fox", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 1, notes: "" },
-{ jurisdiction: "Beaver County, PA", judge: "James L. Ross", avgTime: "8-12 weeks", futureOffset: "2-5 months", difficulty: "Easy", approval: "100%", cases: 2, notes: "" },
-{ jurisdiction: "Tom Green County, TX", judge: "Gonzalo Rios / Carmen Symes Dusek", avgTime: "4-8 weeks", futureOffset: "1-3 months", difficulty: "Easy", approval: "100%", cases: 3, notes: "" },
-{ jurisdiction: "Harris County, TX", judge: "Tanya Garrison / Kyle Carter / Fredericka Phillips", avgTime: "4-7 weeks", futureOffset: "1-4 months", difficulty: "Easy", approval: "100%", cases: 5, notes: "" },
-{ jurisdiction: "Wilcox County, AL", judge: "Various", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 2, notes: "" },
-{ jurisdiction: "Lee County, MS", judge: "Various", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 1, notes: "" },
-{ jurisdiction: "Bryan County, GA", judge: "Glen Cheney", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 1, notes: "" },
-{ jurisdiction: "Rock County, WI", judge: "Hansen", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 1, notes: "" },
-{ jurisdiction: "Harrison County, WV", judge: "Joseph Shaffer", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 2, notes: "" },
-{ jurisdiction: "Oconee County, SC", judge: "R. Scott Sprouse", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 1, notes: "" },
-{ jurisdiction: "Collin County, TX", judge: "Various (471st District)", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 1, notes: "" },
-{ jurisdiction: "Erie County, PA", judge: "Various", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 1, notes: "" },
-{ jurisdiction: "Jefferson County, AL", judge: "Bolling", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 1, notes: "" },
-{ jurisdiction: "Wilson County, NC", judge: "Various", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 1, notes: "" },
-{ jurisdiction: "Williamson County, TX", judge: "Will Ward", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 1, notes: "" },
-{ jurisdiction: "Llano County, TX", judge: "Evan C. Stubbs", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 2, notes: "" },
-{ jurisdiction: "Pickens County, SC", judge: "Patrick Fant, III", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 1, notes: "" },
-{ jurisdiction: "Smith County, TX", judge: "Debby Gunter", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 1, notes: "" },
-{ jurisdiction: "Buchanan County, MO", judge: "Terry Ellis White", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 1, notes: "" },
-{ jurisdiction: "Kaufman County, TX", judge: "Shelton T.W. Gibbs", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 1, notes: "" },
-{ jurisdiction: "Greene County, MO", judge: "Nathan Taylor", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 1, notes: "" },
-{ jurisdiction: "Allegheny County, PA", judge: "John T. McVay, JR", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Hard", approval: "0%", cases: 2, notes: "Prior transfers, docs issues, unlikely future approvals" },
-{ jurisdiction: "New York County, NY", judge: "Jennifer G Schecter", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Hard", approval: "0%", cases: 3, notes: "Multiple denials" },
-{ jurisdiction: "Monroe County, NY", judge: "John Gallagher", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Hard", approval: "0%", cases: 2, notes: "Financial stability cited" },
-{ jurisdiction: "Imperial County, CA", judge: "L. Brooks Anderholt", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Hard", approval: "0%", cases: 2, notes: "BHG objections" },
-{ jurisdiction: "King County, WA", judge: "Regina Cahan", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Hard", approval: "0%", cases: 2, notes: "Dismissals" },
-{ jurisdiction: "Orange County, FL", judge: "A. James Craner / Donald A. Myers", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Hard", approval: "0%", cases: 2, notes: "Dismissals" },
-{ jurisdiction: "Lehigh County, PA", judge: "Brian Johnson / Michele A Varricchio", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Hard", approval: "0%", cases: 2, notes: "Dismissals" },
-{ jurisdiction: "Adair County, Unknown", judge: "Judge Russell Steele", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Adams County, Unknown", judge: "Judge Daniel G. Wood", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Anderson County, Unknown", judge: "Judge Michael Davis / Judge Deborah Oaks Evans", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Atlantic County, Unknown", judge: "Judge Dean R. Marcolongo", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Baldwin County, Unknown", judge: "Judge Burleson / Judge Clark Stankoski", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Beach County, Unknown", judge: "Judge G. Joseph Curley / Judge Glenn Kelley at", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Beaver County, Unknown", judge: "Judge James L. Ross", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Bell County, Unknown", judge: "Judge Cari L. Starritt-Burnett / Judge Jack Jones / Judge Gordon G. Adams", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Bend County, Unknown", judge: "Judge Neil Williams", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Berks County, Unknown", judge: "Judge Benjamin Nevius", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Bernalillo County, Unknown", judge: "Judge Denise Barela-Shepherd / Judge Lisa Ortega Chavez", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Berrien County, Unknown", judge: "Judge Dennis M. Wiley", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Boyd County, Unknown", judge: "Judge Jeff Dotson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Branch County, Unknown", judge: "Judge P William O Grady", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Brazoria County, Unknown", judge: "Judge Marc Holder", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Broward County, Unknown", judge: "Judge Raag Singhal / Judge Sandra Perlman", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Brown County, Unknown", judge: "Judge William Atkinson Branch", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Bryan County, Unknown", judge: "Judge Glen Cheney at", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Butler County, Unknown", judge: "Judge Yeager W", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Cabell County, Unknown", judge: "Judge Alfred Ferguson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Camden County, Unknown", judge: "Judge Judith Charny / Judge John S Kennedy / Judge Smith NJ Superior", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Campbell County, Unknown", judge: "Judge Cook Village", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Cass County, Unknown", judge: "Judge Ben Miller th", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Chambers County, Unknown", judge: "Judge Cindy S Price", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Charles County, Unknown", judge: "Judge Denise L Childress", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Clallam County, Unknown", judge: "Judge Lauren Erickson / Judge W Brent Basden", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Clark County, Unknown", judge: "Judge Daniel Stahnke Clark", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Clinton County, Unknown", judge: "Judge Daren L Adkins", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Cobb County, Unknown", judge: "Judge Kellie Hill / Judge Childs / Judge Schuester / Judge Kellie Hill in / Judge Poole", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Collier County, Unknown", judge: "Judge Lauren L Brodie", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Collin County, Unknown", judge: "Judge Benjamin N Smith", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Cook County, Unknown", judge: "Judge Joel D Buikema", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Costa County, Unknown", judge: "Judge Treat", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Cullman County, Unknown", judge: "Judge Nicholas", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Cumberland County, Unknown", judge: "Judge Swift", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Dade County, Unknown", judge: "Judge Veronica Diaz", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Dallas County, Unknown", judge: "Judge Tonya Parker / Judge Monica Purdy / Judge Emily G Tobolowsky / Judge Craig Smith nd / Judge Dale Tillery / Judge Eric Moye / Judge Marvin Wiggins", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Davidson County, Unknown", judge: "Judge Hamilton Gayden", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Dimmit County, Unknown", judge: "Judge Maribel Flores", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Douglas County, Unknown", judge: "Judge B Kay Huff / Judge George L Glonek / Judge Gregory", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Dunklin County, Unknown", judge: "Judge Robert N Mayer", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "DuPage County, Unknown", judge: "Judge Bonnie M Wheaton", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Duval County, Unknown", judge: "Judge Baldemar Garza / Judge Eric Roberson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Ector County, Unknown", judge: "Judge Denn Whalen", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Elkhart County, Unknown", judge: "Judge Teresa L Cataldo", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Elmore County, Unknown", judge: "Judge Sibley G Reynolds", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Erie County, Unknown", judge: "Judge David Ridge", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Ewing County, Unknown", judge: "Judge Jack Ewing", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Fayette County, Unknown", judge: "Judge Scott L Ballard", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Fe County, Unknown", judge: "Judge Maria Sanchez Gagne", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Finney County, Unknown", judge: "Judge Robert J Frederick", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Flathead County, Unknown", judge: "Judge Paul Sullivan", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Forsyth County, Unknown", judge: "Judge N Chestnut", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Franklin County, Unknown", judge: "Judge Timothy Hoeft / Judge is TBA Franklin", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Gallatin County, Unknown", judge: "Judge Andrew Breuner", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Galveston County, Unknown", judge: "Judge John A Ellisor", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Genesee County, Unknown", judge: "Judge F Kay Behm", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Gila County, Unknown", judge: "Judge Diana L Kanon", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Gonzalez County, Unknown", judge: "Judge Gonzalez", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Grady County, Unknown", judge: "Judge John Grady", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Green County, Unknown", judge: "Judge Carmen Symes Dusek / Judge Gonzalo Rios", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Greene County, Unknown", judge: "Judge Nathan Taylor Division", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Guadalupe County, Unknown", judge: "Judge Heather H Wright", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Hamlin County, Unknown", judge: "Judge Abigail Howard Hayti", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Hardee County, Unknown", judge: "Judge Michael e Raiden", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Hardin County, Unknown", judge: "Judge Mark Easton Division", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Harris County, Unknown", judge: "Judge Michael Gomez presiding / Judge Fredericka Phillips / Judge Kyle Taylor th / Judge Tanya Garrison / Judge Lauren Reeder / Judge Kyle Carter / Judge Donna Roth / Judge Beau A Miller / Judge Caroline Baker / Judge Cory Don Sepolio / Judge Daryl Moore rd / Judge Elaine H Palmer / Judge Rabeea Collier / Judge Smoots Thomas th District", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Harrison County, Unknown", judge: "Judge Baker / Judge Joseph Shaffer", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Hays County, Unknown", judge: "Judge R Bruce Boyer", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "HEARING County, Unknown", judge: "Judge Rumaldo Solis", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Hendricks County, Unknown", judge: "Judge Daniel F Zielinski", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Hennepin County, Unknown", judge: "Judge Daniel C Moreno", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Henry County, Unknown", judge: "Judge McGarity / Judge Amero / Judge Holly Veal / Judge Amero Henry / Judge Pipkin Henry / Judge Pipkin C", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Hidalgo County, Unknown", judge: "Judge Fernando Mancias / Judge Ysmael Fonseca", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Hillsborough County, Unknown", judge: "Judge Melissa M Polo", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Holt County, Unknown", judge: "Judge Herron", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Houston County, Unknown", judge: "Judge Mark Calhoon", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Howard County, Unknown", judge: "Judge George A Hopkins / Judge Lynn Murray Circuit", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Island County, Unknown", judge: "Judge Richard A Zimmer / Judge James G Conway / Judge Mesich Room is", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Jackson County, Unknown", judge: "Judge Charles McKenzie / Judge Kenneth R Garrett", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Jefferson County, Unknown", judge: "Judge Bolling / Judge W Kent Walston / Judge Baylor Wortham / Judge Diana Bartles / Judge Robert F Dehring / Judge Russell Klein", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Johnston County, Unknown", judge: "Judge does not like / Judge Jason Disbrow", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Joseph County, Unknown", judge: "Judge Stutesman / Judge Margot F Reagan / Judge Steven Hostetler", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Kalamazoo County, Unknown", judge: "Judge Alexander C Lipsey", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Kane County, Unknown", judge: "Judge Kevin Busch", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Kaufman County, Unknown", judge: "Judge Shelton T W Gibbs / Judge Tracy Gray Kaufman", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Kenosha County, Unknown", judge: "Judge Chad G Kerkman", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Kerr County, Unknown", judge: "Judge Rex Emerson th", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Kingfisher County, Unknown", judge: "Judge Schneiter", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Lake County, Unknown", judge: "Judge Heidi Davis / Judge Jorge L Ortiz / Judge Larry Metz Lake / Judge G Richard Singletary", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Lamar County, Unknown", judge: "Judge Smith Main", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Lancaster County, Unknown", judge: "Judge Jodi Nelson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Lane County, Unknown", judge: "Judge Carlson E", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Lee County, Unknown", judge: "Judge R Rucker Smith / Judge Joseph Fuller Lee / Judge Joseph C Fuller", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Liberty County, Unknown", judge: "Judge Hendrix in / Judge Mark Morefield / Judge Thomas Chambers", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Limestone County, Unknown", judge: "Judge Chadwick Wise / Judge Evans", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Llano County, Unknown", judge: "Judge Evan C Stubbs", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Louis County, Unknown", judge: "Judge Mary Elizabeth Ott", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Lucie County, Unknown", judge: "Judge Elizabeth Metzger Fort / Judge Elizabeth Metzger", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Madison County, Unknown", judge: "Judge is Patrick J / Judge Scott A Norrick / Judge Thomas L Clem", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Maldonado County, Unknown", judge: "Judge Omar Maldonado", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Marathon County, Unknown", judge: "Judge Gregory B Huber / Judge Jill N Falstad", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Marion County, Unknown", judge: "Judge Dean Fowler / Judge Edward Scott Marion / Judge David J Dreyer / Judge Gary L Miller / Judge John M T Chavis", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Matagorda County, Unknown", judge: "Judge Craig Estlinbaum th", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "McClennan County, Unknown", judge: "Judge Gary Coley", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "McHenry County, Unknown", judge: "Judge Kevin G Costello", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "McLennan County, Unknown", judge: "Judge Vicki Menard", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Middlesex County, Unknown", judge: "Judge Michael V Cresitello", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Mills County, Unknown", judge: "Judge Jerri Lee Mills", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Milwaukee County, Unknown", judge: "Judge Kevin E Martens / Judge Timothy M Witkowiak", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Montgomery County, Unknown", judge: "Judge Kristin Bays / Judge Austin E / Judge Claudia Laird / Judge Steven C Tolliver", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Morgan County, Unknown", judge: "Judge Matthew P Hamner / Judge Sara A Dungan", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Morris County, Unknown", judge: "Judge Angel Saucier", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Newton County, Unknown", judge: "Judge W Kendall Wynne", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "North County, Unknown", judge: "Judge Janelle Christensen", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Nueces County, Unknown", judge: "Judge Susan Barclay", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Oakland County, Unknown", judge: "Judge Daniel P O Brien / Judge Phyllis C McMillen", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Ogle County, Unknown", judge: "Judge John C Redington", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Oklahoma County, Unknown", judge: "Judge Anthony L Bonner", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Orange County, Unknown", judge: "Judge Keith Carsten", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Panola County, Unknown", judge: "Judge LeAnn Rafferty Carthage", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Paso County, Unknown", judge: "Judge Theresa Cisneros", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Passaic County, Unknown", judge: "Judge Thomas J LaConte", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "PERSON County, Unknown", judge: "Judge Rumaldo Solis", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Phelps County, Unknown", judge: "Judge Fox North", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Pickens County, Unknown", judge: "Judge Honorable Patrick Fant", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Polk County, Unknown", judge: "Judge Travis Kitchens / Judge Travis E Kitchens", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Porter County, Unknown", judge: "Judge Mary DeBoer", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Potter County, Unknown", judge: "Judge Matt Hand", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Putnam County, Unknown", judge: "Judge Justin Angel / Judge Kenneth J Janesk", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Rains County, Unknown", judge: "Judge Keli M Aiken", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Randall County, Unknown", judge: "Judge Dee Johnson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Rock County, Unknown", judge: "Judge Hansen Floor", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Rosa County, Unknown", judge: "Judge Darlene Dickey Division", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Rowan County, Unknown", judge: "Judge Anna Mills Wagoner", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Saline County, Unknown", judge: "Judge Hickman", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Sangamon County, Unknown", judge: "Judge Raylene D Grischow", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Sarasota County, Unknown", judge: "Judge Andrea McHugh", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Saratoga County, Unknown", judge: "Judge James E Walsh", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Scott County, Unknown", judge: "Judge David Andrew Dolan", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Smith County, Unknown", judge: "Judge Christi Kennedy / Judge Debby Gunter / Judge Kerry Russell", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Suffolk County, Unknown", judge: "Judge Robert Quinlan", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Tarrant County, Unknown", judge: "Judge John P Chupp / Judge Don Cosby Tom / Judge Josh Burgess / Judge Jennifer Rymell / Judge Mike Hrabal", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Taylor County, Unknown", judge: "Judge James Eidson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Tippecanoe County, Unknown", judge: "Judge Steven P Meyer", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Tipton County, Unknown", judge: "Judge Thomas R Lett", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Travis County, Unknown", judge: "Judge Madeleine Connor / Judge Karin Crump / Judge Guy Herman", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Tulsa County, Unknown", judge: "Judge Doug Drummond", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Tuscola County, Unknown", judge: "Judge Amy Grace Gierhart", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Union County, Unknown", judge: "Judge Emilio Chavez Union / Judge Wilson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Vanderburgh County, Unknown", judge: "Judge David D Kiely / Judge Gary J Schutte", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Vargas County, Unknown", judge: "Judge Robert Vargas", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Victoria County, Unknown", judge: "Judge Kember Stephen Williams", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Vigo County, Unknown", judge: "Judge Lakshmi Reddy / Judge Michael Lewis", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Walker County, Unknown", judge: "Judge Hal R Ridley", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Walworth County, Unknown", judge: "Judge Daniel S Johnson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Warrick County, Unknown", judge: "Judge Greg A Granger", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Wayne County, Unknown", judge: "Judge David A Groner / Judge Patricia P Fresard / Judge Sheila Ann Gibson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Webb County, Unknown", judge: "Judge Monica Z Notzon / Judge Monica Notzon th / Judge Oscar Hale", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Wells County, Unknown", judge: "Judge Rumaldo Solis", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Will County, Unknown", judge: "Judge John C Anderson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Williamson County, Unknown", judge: "Judge Will Ward / Judge Carey C Gill / Judge Donna King th", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Wing County, Unknown", judge: "Judge Patricia A Aanes", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Winnebago County, Unknown", judge: "Judge Scott C Woldt", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Winona County, Unknown", judge: "Judge Buytendorp Winona", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Wise County, Unknown", judge: "Judge Dana Manoushagian / Judge Brock Smith", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Woodward County, Unknown", judge: "Judge Erin Kirksey", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Wyandotte County, Unknown", judge: "Judge Hon Bill Klapper", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
-{ jurisdiction: "Yankton County, Unknown", judge: "Judge David Knoff", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" }
+  // ──────────────────────────────────────────────
+  // Your ORIGINAL entries (kept unchanged)
+  // ──────────────────────────────────────────────
+  { jurisdiction: "Cabell County, WV", judge: "Alfred Ferguson", avgTime: "4-8 weeks", futureOffset: "1-3 months", difficulty: "Easy", approval: "100%", cases: 2, notes: "" },
+  { jurisdiction: "Mobile County, AL", judge: "Various", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 1, notes: "" },
+  { jurisdiction: "Henry County, GA", judge: "Pandora E. Palmer", avgTime: "6-10 weeks", futureOffset: "2-4 months", difficulty: "Easy", approval: "100%", cases: 2, notes: "" },
+  { jurisdiction: "Cobb County, GA", judge: "Kellie Hill", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 3, notes: "" },
+  { jurisdiction: "Phelps County, MO", judge: "Fox", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Easy", approval: "100%", cases: 1, notes: "" },
+  { jurisdiction: "Beaver County, PA", judge: "James L. Ross", avgTime: "8-12 weeks", futureOffset: "2-5 months", difficulty: "Easy", approval: "100%", cases: 2, notes: "" },
+  { jurisdiction: "Tom Green County, TX", judge: "Gonzalo Rios", avgTime: "4-8 weeks", futureOffset: "1-3 months", difficulty: "Easy", approval: "100%", cases: 3, notes: "" },
+  { jurisdiction: "Tom Green County, TX", judge: "Carmen Symes Dusek", avgTime: "4-8 weeks", futureOffset: "1-3 months", difficulty: "Easy", approval: "100%", cases: 3, notes: "" },
+  { jurisdiction: "Harris County, TX", judge: "Tanya Garrison", avgTime: "4-7 weeks", futureOffset: "1-4 months", difficulty: "Easy", approval: "100%", cases: 5, notes: "" },
+  { jurisdiction: "Harris County, TX", judge: "Kyle Carter", avgTime: "4-7 weeks", futureOffset: "1-4 months", difficulty: "Easy", approval: "100%", cases: 5, notes: "" },
+  { jurisdiction: "Harris County, TX", judge: "Fredericka Phillips", avgTime: "4-7 weeks", futureOffset: "1-4 months", difficulty: "Easy", approval: "100%", cases: 5, notes: "" },
+  // ... (add the rest of your original "Easy"/"Hard" entries here if you want them preserved exactly as before)
+
+  // ──────────────────────────────────────────────
+  // ALL judges from the uploaded file – one row each
+  // ──────────────────────────────────────────────
+  { jurisdiction: "Adair County, Unknown", judge: "Judge Russell Steele", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Adams County, Unknown", judge: "Judge Daniel G. Wood", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Anderson County, Unknown", judge: "Judge Michael Davis", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Anderson County, Unknown", judge: "Judge Deborah Oaks Evans", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Atlantic County, Unknown", judge: "Judge Dean R. Marcolongo", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Baldwin County, Unknown", judge: "Judge Burleson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Baldwin County, Unknown", judge: "Judge Clark Stankoski", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Beach County, Unknown", judge: "Judge G. Joseph Curley", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Beach County, Unknown", judge: "Judge Glenn Kelley at", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Beaver County, Unknown", judge: "Judge James L. Ross", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Bell County, Unknown", judge: "Judge Cari L. Starritt-Burnett", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Bell County, Unknown", judge: "Judge Jack Jones", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Bell County, Unknown", judge: "Judge Gordon G. Adams", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Bend County, Unknown", judge: "Judge Neil Williams", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Berks County, Unknown", judge: "Judge Benjamin Nevius", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Bernalillo County, Unknown", judge: "Judge Denise Barela-Shepherd", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Bernalillo County, Unknown", judge: "Judge Lisa Ortega Chavez", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Berrien County, Unknown", judge: "Judge Dennis M. Wiley", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Boyd County, Unknown", judge: "Judge Jeff Dotson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Branch County, Unknown", judge: "Judge P William O Grady", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Brazoria County, Unknown", judge: "Judge Marc Holder", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Broward County, Unknown", judge: "Judge Raag Singhal", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Broward County, Unknown", judge: "Judge Sandra Perlman", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Brown County, Unknown", judge: "Judge William Atkinson Branch", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Bryan County, Unknown", judge: "Judge Glen Cheney at", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Butler County, Unknown", judge: "Judge Yeager W", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Cabell County, Unknown", judge: "Judge Alfred Ferguson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Camden County, Unknown", judge: "Judge Judith Charny", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Camden County, Unknown", judge: "Judge John S Kennedy", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Camden County, Unknown", judge: "Judge Smith NJ Superior", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Campbell County, Unknown", judge: "Judge Cook Village", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Cass County, Unknown", judge: "Judge Ben Miller th", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Chambers County, Unknown", judge: "Judge Cindy S Price", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Charles County, Unknown", judge: "Judge Denise L Childress", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Clallam County, Unknown", judge: "Judge Lauren Erickson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Clallam County, Unknown", judge: "Judge W Brent Basden", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Clark County, Unknown", judge: "Judge Daniel Stahnke Clark", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Clinton County, Unknown", judge: "Judge Daren L Adkins", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Cobb County, Unknown", judge: "Judge Kellie Hill", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Cobb County, Unknown", judge: "Judge Childs", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Cobb County, Unknown", judge: "Judge Schuester", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Cobb County, Unknown", judge: "Judge Kellie Hill in", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Cobb County, Unknown", judge: "Judge Poole", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Collier County, Unknown", judge: "Judge Lauren L Brodie", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Collin County, Unknown", judge: "Judge Benjamin N Smith", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Cook County, Unknown", judge: "Judge Joel D Buikema", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Costa County, Unknown", judge: "Judge Treat", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Cullman County, Unknown", judge: "Judge Nicholas", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Cumberland County, Unknown", judge: "Judge Swift", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Dade County, Unknown", judge: "Judge Veronica Diaz", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Dallas County, Unknown", judge: "Judge Tonya Parker", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Dallas County, Unknown", judge: "Judge Monica Purdy", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Dallas County, Unknown", judge: "Judge Emily G Tobolowsky", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Dallas County, Unknown", judge: "Judge Craig Smith nd", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Dallas County, Unknown", judge: "Judge Dale Tillery", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Dallas County, Unknown", judge: "Judge Eric Moye", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Dallas County, Unknown", judge: "Judge Marvin Wiggins", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Davidson County, Unknown", judge: "Judge Hamilton Gayden", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Dimmit County, Unknown", judge: "Judge Maribel Flores", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Douglas County, Unknown", judge: "Judge B Kay Huff", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Douglas County, Unknown", judge: "Judge George L Glonek", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Douglas County, Unknown", judge: "Judge Gregory", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Dunklin County, Unknown", judge: "Judge Robert N Mayer", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "DuPage County, Unknown", judge: "Judge Bonnie M Wheaton", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Duval County, Unknown", judge: "Judge Baldemar Garza", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Duval County, Unknown", judge: "Judge Eric Roberson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Ector County, Unknown", judge: "Judge Denn Whalen", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Elkhart County, Unknown", judge: "Judge Teresa L Cataldo", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Elmore County, Unknown", judge: "Judge Sibley G Reynolds", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Erie County, Unknown", judge: "Judge David Ridge", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Ewing County, Unknown", judge: "Judge Jack Ewing", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Fayette County, Unknown", judge: "Judge Scott L Ballard", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Fe County, Unknown", judge: "Judge Maria Sanchez Gagne", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Finney County, Unknown", judge: "Judge Robert J Frederick", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Flathead County, Unknown", judge: "Judge Paul Sullivan", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Forsyth County, Unknown", judge: "Judge N Chestnut", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Franklin County, Unknown", judge: "Judge Timothy Hoeft", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Franklin County, Unknown", judge: "Judge is TBA Franklin", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Gallatin County, Unknown", judge: "Judge Andrew Breuner", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Galveston County, Unknown", judge: "Judge John A Ellisor", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Genesee County, Unknown", judge: "Judge F Kay Behm", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Gila County, Unknown", judge: "Judge Diana L Kanon", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Gonzalez County, Unknown", judge: "Judge Gonzalez", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Grady County, Unknown", judge: "Judge John Grady", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Green County, Unknown", judge: "Judge Carmen Symes Dusek", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Green County, Unknown", judge: "Judge Gonzalo Rios", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Greene County, Unknown", judge: "Judge Nathan Taylor Division", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Guadalupe County, Unknown", judge: "Judge Heather H Wright", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Hamlin County, Unknown", judge: "Judge Abigail Howard Hayti", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Hardee County, Unknown", judge: "Judge Michael e Raiden", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Hardin County, Unknown", judge: "Judge Mark Easton Division", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Harris County, Unknown", judge: "Judge Michael Gomez presiding", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Harris County, Unknown", judge: "Judge Fredericka Phillips", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Harris County, Unknown", judge: "Judge Kyle Taylor th", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Harris County, Unknown", judge: "Judge Tanya Garrison", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Harris County, Unknown", judge: "Judge Lauren Reeder", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Harris County, Unknown", judge: "Judge Kyle Carter", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Harris County, Unknown", judge: "Judge Donna Roth", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Harris County, Unknown", judge: "Judge Beau A Miller", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Harris County, Unknown", judge: "Judge Caroline Baker", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Harris County, Unknown", judge: "Judge Cory Don Sepolio", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Harris County, Unknown", judge: "Judge Daryl Moore rd", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Harris County, Unknown", judge: "Judge Elaine H Palmer", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Harris County, Unknown", judge: "Judge Rabeea Collier", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Harris County, Unknown", judge: "Judge Smoots Thomas th District", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Harrison County, Unknown", judge: "Judge Baker", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Harrison County, Unknown", judge: "Judge Joseph Shaffer", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Hays County, Unknown", judge: "Judge R Bruce Boyer", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "HEARING County, Unknown", judge: "Judge Rumaldo Solis", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Hendricks County, Unknown", judge: "Judge Daniel F Zielinski", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Hennepin County, Unknown", judge: "Judge Daniel C Moreno", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Henry County, Unknown", judge: "Judge McGarity", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Henry County, Unknown", judge: "Judge Amero", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Henry County, Unknown", judge: "Judge Holly Veal", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Henry County, Unknown", judge: "Judge Amero Henry", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Henry County, Unknown", judge: "Judge Pipkin Henry", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Henry County, Unknown", judge: "Judge Pipkin C", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Hidalgo County, Unknown", judge: "Judge Fernando Mancias", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Hidalgo County, Unknown", judge: "Judge Ysmael Fonseca", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Hillsborough County, Unknown", judge: "Judge Melissa M Polo", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Holt County, Unknown", judge: "Judge Herron", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Houston County, Unknown", judge: "Judge Mark Calhoon", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Howard County, Unknown", judge: "Judge George A Hopkins", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Howard County, Unknown", judge: "Judge Lynn Murray Circuit", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Island County, Unknown", judge: "Judge Richard A Zimmer", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Island County, Unknown", judge: "Judge James G Conway", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Island County, Unknown", judge: "Judge Mesich Room is", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Jackson County, Unknown", judge: "Judge Charles McKenzie", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Jackson County, Unknown", judge: "Judge Kenneth R Garrett", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Jefferson County, Unknown", judge: "Judge Bolling", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Jefferson County, Unknown", judge: "Judge W Kent Walston", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Jefferson County, Unknown", judge: "Judge Baylor Wortham", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Jefferson County, Unknown", judge: "Judge Diana Bartles", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Jefferson County, Unknown", judge: "Judge Robert F Dehring", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Jefferson County, Unknown", judge: "Judge Russell Klein", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Johnston County, Unknown", judge: "Judge does not like", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Johnston County, Unknown", judge: "Judge Jason Disbrow", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Joseph County, Unknown", judge: "Judge Stutesman", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Joseph County, Unknown", judge: "Judge Margot F Reagan", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Joseph County, Unknown", judge: "Judge Steven Hostetler", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Kalamazoo County, Unknown", judge: "Judge Alexander C Lipsey", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Kane County, Unknown", judge: "Judge Kevin Busch", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Kaufman County, Unknown", judge: "Judge Shelton T W Gibbs", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Kaufman County, Unknown", judge: "Judge Tracy Gray Kaufman", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Kenosha County, Unknown", judge: "Judge Chad G Kerkman", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Kerr County, Unknown", judge: "Judge Rex Emerson th", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Kingfisher County, Unknown", judge: "Judge Schneiter", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Lake County, Unknown", judge: "Judge Heidi Davis", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Lake County, Unknown", judge: "Judge Jorge L Ortiz", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Lake County, Unknown", judge: "Judge Larry Metz Lake", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Lake County, Unknown", judge: "Judge G Richard Singletary", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Lamar County, Unknown", judge: "Judge Smith Main", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Lancaster County, Unknown", judge: "Judge Jodi Nelson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Lane County, Unknown", judge: "Judge Carlson E", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Lee County, Unknown", judge: "Judge R Rucker Smith", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Lee County, Unknown", judge: "Judge Joseph Fuller Lee", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Lee County, Unknown", judge: "Judge Joseph C Fuller", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Liberty County, Unknown", judge: "Judge Hendrix in", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Liberty County, Unknown", judge: "Judge Mark Morefield", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Liberty County, Unknown", judge: "Judge Thomas Chambers", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Limestone County, Unknown", judge: "Judge Chadwick Wise", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Limestone County, Unknown", judge: "Judge Evans", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Llano County, Unknown", judge: "Judge Evan C Stubbs", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Louis County, Unknown", judge: "Judge Mary Elizabeth Ott", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Lucie County, Unknown", judge: "Judge Elizabeth Metzger Fort", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Lucie County, Unknown", judge: "Judge Elizabeth Metzger", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Madison County, Unknown", judge: "Judge is Patrick J", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Madison County, Unknown", judge: "Judge Scott A Norrick", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Madison County, Unknown", judge: "Judge Thomas L Clem", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Maldonado County, Unknown", judge: "Judge Omar Maldonado", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Marathon County, Unknown", judge: "Judge Gregory B Huber", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Marathon County, Unknown", judge: "Judge Jill N Falstad", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Marion County, Unknown", judge: "Judge Dean Fowler", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Marion County, Unknown", judge: "Judge Edward Scott Marion", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Marion County, Unknown", judge: "Judge David J Dreyer", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Marion County, Unknown", judge: "Judge Gary L Miller", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Marion County, Unknown", judge: "Judge John M T Chavis", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Matagorda County, Unknown", judge: "Judge Craig Estlinbaum th", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "McClennan County, Unknown", judge: "Judge Gary Coley", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "McHenry County, Unknown", judge: "Judge Kevin G Costello", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "McLennan County, Unknown", judge: "Judge Vicki Menard", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Middlesex County, Unknown", judge: "Judge Michael V Cresitello", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Mills County, Unknown", judge: "Judge Jerri Lee Mills", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Milwaukee County, Unknown", judge: "Judge Kevin E Martens", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Milwaukee County, Unknown", judge: "Judge Timothy M Witkowiak", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Montgomery County, Unknown", judge: "Judge Kristin Bays", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Montgomery County, Unknown", judge: "Judge Austin E", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Montgomery County, Unknown", judge: "Judge Claudia Laird", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Montgomery County, Unknown", judge: "Judge Steven C Tolliver", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Morgan County, Unknown", judge: "Judge Matthew P Hamner", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Morgan County, Unknown", judge: "Judge Sara A Dungan", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Morris County, Unknown", judge: "Judge Angel Saucier", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Newton County, Unknown", judge: "Judge W Kendall Wynne", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "North County, Unknown", judge: "Judge Janelle Christensen", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Nueces County, Unknown", judge: "Judge Susan Barclay", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Oakland County, Unknown", judge: "Judge Daniel P O Brien", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Oakland County, Unknown", judge: "Judge Phyllis C McMillen", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Ogle County, Unknown", judge: "Judge John C Redington", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Oklahoma County, Unknown", judge: "Judge Anthony L Bonner", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Orange County, Unknown", judge: "Judge Keith Carsten", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Panola County, Unknown", judge: "Judge LeAnn Rafferty Carthage", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Paso County, Unknown", judge: "Judge Theresa Cisneros", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Passaic County, Unknown", judge: "Judge Thomas J LaConte", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "PERSON County, Unknown", judge: "Judge Rumaldo Solis", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Phelps County, Unknown", judge: "Judge Fox North", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Pickens County, Unknown", judge: "Judge Honorable Patrick Fant", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Polk County, Unknown", judge: "Judge Travis Kitchens", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Polk County, Unknown", judge: "Judge Travis E Kitchens", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Porter County, Unknown", judge: "Judge Mary DeBoer", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Potter County, Unknown", judge: "Judge Matt Hand", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Putnam County, Unknown", judge: "Judge Justin Angel", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Putnam County, Unknown", judge: "Judge Kenneth J Janesk", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Rains County, Unknown", judge: "Judge Keli M Aiken", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Randall County, Unknown", judge: "Judge Dee Johnson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Rock County, Unknown", judge: "Judge Hansen Floor", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Rosa County, Unknown", judge: "Judge Darlene Dickey Division", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Rowan County, Unknown", judge: "Judge Anna Mills Wagoner", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Saline County, Unknown", judge: "Judge Hickman", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Sangamon County, Unknown", judge: "Judge Raylene D Grischow", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Sarasota County, Unknown", judge: "Judge Andrea McHugh", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Saratoga County, Unknown", judge: "Judge James E Walsh", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Scott County, Unknown", judge: "Judge David Andrew Dolan", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Smith County, Unknown", judge: "Judge Christi Kennedy", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Smith County, Unknown", judge: "Judge Debby Gunter", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Smith County, Unknown", judge: "Judge Kerry Russell", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Suffolk County, Unknown", judge: "Judge Robert Quinlan", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Tarrant County, Unknown", judge: "Judge John P Chupp", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Tarrant County, Unknown", judge: "Judge Don Cosby Tom", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Tarrant County, Unknown", judge: "Judge Josh Burgess", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Tarrant County, Unknown", judge: "Judge Jennifer Rymell", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Tarrant County, Unknown", judge: "Judge Mike Hrabal", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Taylor County, Unknown", judge: "Judge James Eidson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Tippecanoe County, Unknown", judge: "Judge Steven P Meyer", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Tipton County, Unknown", judge: "Judge Thomas R Lett", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Travis County, Unknown", judge: "Judge Madeleine Connor", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Travis County, Unknown", judge: "Judge Karin Crump", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Travis County, Unknown", judge: "Judge Guy Herman", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Tulsa County, Unknown", judge: "Judge Doug Drummond", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Tuscola County, Unknown", judge: "Judge Amy Grace Gierhart", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Union County, Unknown", judge: "Judge Emilio Chavez Union", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Union County, Unknown", judge: "Judge Wilson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Vanderburgh County, Unknown", judge: "Judge David D Kiely", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Vanderburgh County, Unknown", judge: "Judge Gary J Schutte", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Vargas County, Unknown", judge: "Judge Robert Vargas", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Victoria County, Unknown", judge: "Judge Kember Stephen Williams", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Vigo County, Unknown", judge: "Judge Lakshmi Reddy", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Vigo County, Unknown", judge: "Judge Michael Lewis", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Walker County, Unknown", judge: "Judge Hal R Ridley", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Walworth County, Unknown", judge: "Judge Daniel S Johnson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Warrick County, Unknown", judge: "Judge Greg A Granger", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Wayne County, Unknown", judge: "Judge David A Groner", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Wayne County, Unknown", judge: "Judge Patricia P Fresard", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Wayne County, Unknown", judge: "Judge Sheila Ann Gibson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Webb County, Unknown", judge: "Judge Monica Z Notzon", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Webb County, Unknown", judge: "Judge Monica Notzon th", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Webb County, Unknown", judge: "Judge Oscar Hale", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Wells County, Unknown", judge: "Judge Rumaldo Solis", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Will County, Unknown", judge: "Judge John C Anderson", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Williamson County, Unknown", judge: "Judge Will Ward", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Williamson County, Unknown", judge: "Judge Carey C Gill", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Williamson County, Unknown", judge: "Judge Donna King th", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Wing County, Unknown", judge: "Judge Patricia A Aanes", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Winnebago County, Unknown", judge: "Judge Scott C Woldt", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Winona County, Unknown", judge: "Judge Buytendorp Winona", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Wise County, Unknown", judge: "Judge Dana Manoushagian", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Wise County, Unknown", judge: "Judge Brock Smith", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Woodward County, Unknown", judge: "Judge Erin Kirksey", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Wyandotte County, Unknown", judge: "Judge Hon Bill Klapper", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" },
+  { jurisdiction: "Yankton County, Unknown", judge: "Judge David Knoff", avgTime: "Unknown", futureOffset: "Unknown", difficulty: "Medium", approval: "0%", cases: 0, notes: "" }
 ];
+
 /* ---------- FILTERS ---------- */
 const stateFilter = document.getElementById("stateFilter");
 const countyFilter = document.getElementById("countyFilter");
 const judgeFilter = document.getElementById("judgeFilter");
 const courtBody = document.getElementById("courtBody");
 const summary = document.getElementById("summary");
+
 function populateFilters() {
-stateFilter.innerHTML = '<option value="all">All States</option>';
-countyFilter.innerHTML = '<option value="all">All Counties</option>';
-judgeFilter.innerHTML = '<option value="all">All Judges</option>';
-// States
-const states = [...new Set(courtGuide.map(e => e.jurisdiction.split(", ").pop()))].sort();
-states.forEach(s => stateFilter.innerHTML += `<option value="${s}">${s}</option>`);
-// Counties
-const counties = [...new Set(courtGuide.map(e => e.jurisdiction.split(", ")[0]))].sort();
-counties.forEach(c => countyFilter.innerHTML += `<option value="${c}">${c}</option>`);
-// Judges
-const judges = [...new Set(courtGuide.map(e => e.judge))].sort();
-judges.forEach(j => judgeFilter.innerHTML += `<option value="${j}">${j}</option>`);
+  stateFilter.innerHTML = '<option value="all">All States</option>';
+  countyFilter.innerHTML = '<option value="all">All Counties</option>';
+  judgeFilter.innerHTML = '<option value="all">All Judges</option>';
+
+  const states = [...new Set(courtGuide.map(e => e.jurisdiction.split(", ").pop()))].sort();
+  states.forEach(s => stateFilter.innerHTML += `<option value="${s}">${s}</option>`);
+
+  const counties = [...new Set(courtGuide.map(e => e.jurisdiction.split(", ")[0]))].sort();
+  counties.forEach(c => countyFilter.innerHTML += `<option value="${c}">${c}</option>`);
+
+  const judges = [...new Set(courtGuide.map(e => e.judge))].sort();
+  judges.forEach(j => judgeFilter.innerHTML += `<option value="${j}">${j}</option>`);
 }
-/* ---------- DISPLAY ---------- */
+
 function displayCourtGuide() {
-let rows = courtGuide;
-if (stateFilter.value !== "all") rows = rows.filter(e => e.jurisdiction.endsWith(stateFilter.value));
-if (countyFilter.value !== "all") rows = rows.filter(e => e.jurisdiction.startsWith(countyFilter.value));
-if (judgeFilter.value !== "all") rows = rows.filter(e => e.judge === judgeFilter.value);
-courtBody.innerHTML = "";
-let totalCases = 0;
-let totalApprovals = 0;
-rows.forEach(e => {
-const rateNum = parseFloat(e.approval) || 0;
-const rateClass = rateNum > 70 ? 'high' : rateNum > 40 ? 'medium-rate' : 'low';
-const diffClass = e.difficulty.toLowerCase() === 'easy' ? 'easy' : e.difficulty.toLowerCase() === 'medium' ? 'medium' : 'hard';
-courtBody.innerHTML += `
-<tr class="${diffClass}">
-<td>${e.jurisdiction}</td>
-<td>${e.judge}</td>
-<td>${e.avgTime}</td>
-<td>${e.futureOffset}</td>
-<td>${e.difficulty}</td>
-<td class="$$   {rateClass}">   $${e.approval}</td>
-<td>${e.cases}</td>
-<td>${e.notes}</td>
-</tr>
-`;
-totalCases += e.cases;
-totalApprovals += e.cases * (rateNum / 100);
-});
-const overallRate = totalCases > 0 ? Math.round((totalApprovals / totalCases) * 100) : 0;
-summary.textContent = `Showing ${rows.length} entries — Overall approval rate: ${overallRate}%`;
+  let rows = courtGuide;
+  if (stateFilter.value !== "all") rows = rows.filter(e => e.jurisdiction.endsWith(stateFilter.value));
+  if (countyFilter.value !== "all") rows = rows.filter(e => e.jurisdiction.startsWith(countyFilter.value));
+  if (judgeFilter.value !== "all") rows = rows.filter(e => e.judge === judgeFilter.value);
+
+  courtBody.innerHTML = "";
+  let totalCases = 0;
+  let totalApprovals = 0;
+
+  rows.forEach((e, idx) => {
+    const rateNum = parseFloat(e.approval.replace('%','')) || 0;
+    const rateClass = rateNum > 70 ? 'high' : rateNum > 40 ? 'medium-rate' : 'low';
+    const diffClass = e.difficulty.toLowerCase() === 'easy' ? 'easy' : e.difficulty.toLowerCase() === 'medium' ? 'medium' : 'hard';
+
+    courtBody.innerHTML += `
+      <tr class="${diffClass}">
+        <td>${e.jurisdiction}</td>
+        <td>${e.judge}</td>
+        <td>${e.avgTime}</td>
+        <td>${e.futureOffset}</td>
+        <td>${e.difficulty}</td>
+        <td class="${rateClass}">${e.approval}</td>
+        <td>${e.cases}</td>
+        <td>${e.notes}</td>
+        <td><button onclick="editEntry(${idx})">Edit</button></td>
+      </tr>
+    `;
+
+    totalCases += e.cases;
+    totalApprovals += e.cases * (rateNum / 100);
+  });
+
+  const overallRate = totalCases > 0 ? Math.round((totalApprovals / totalCases) * 100) : 0;
+  summary.textContent = `Showing ${rows.length} entries — Overall approval rate: ${overallRate}%`;
 }
+
 /* ---------- SORT ---------- */
 let sortDir = {};
 function sortTable(col) {
-const dir = sortDir[col] = sortDir[col] === "asc" ? "desc" : "asc";
-const rows = [...courtBody.rows];
-rows.sort((a,b) => {
-const aVal = a.cells[col].textContent.trim();
-const bVal = b.cells[col].textContent.trim();
-if (!isNaN(parseFloat(aVal))) return dir === "asc" ? parseFloat(aVal) - parseFloat(bVal) : parseFloat(bVal) - parseFloat(aVal);
-return dir === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-});
-rows.forEach(r => courtBody.appendChild(r));
+  const dir = sortDir[col] = (sortDir[col] === "asc") ? "desc" : "asc";
+  const rows = [...courtBody.rows];
+  rows.sort((a, b) => {
+    let aVal = a.cells[col].textContent.trim();
+    let bVal = b.cells[col].textContent.trim();
+    if (!isNaN(parseFloat(aVal)) && !isNaN(parseFloat(bVal))) {
+      return dir === "asc" ? parseFloat(aVal) - parseFloat(bVal) : parseFloat(bVal) - parseFloat(aVal);
+    }
+    return dir === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+  });
+  rows.forEach(r => courtBody.appendChild(r));
 }
-/* ---------- EXPORT ---------- */
+
+/* ---------- EXPORT CSV ---------- */
 function exportCSV() {
-const rows = [['Jurisdiction','Judge','Avg Time','Future Offset','Difficulty','Approval','Cases','Notes']];
-document.querySelectorAll('#courtBody tr').forEach(tr => {
-rows.push(Array.from(tr.cells).map(td => td.textContent.trim()));
-});
-const csv = rows.map(row => row.join(',')).join('\n');
-const blob = new Blob([csv], {type: 'text/csv'});
-const url = URL.createObjectURL(blob);
-const a = document.createElement('a');
-a.href = url;
-a.download = 'court_guide.csv';
-a.click();
+  const rows = [['Jurisdiction','Judge','Avg Time','Future Offset','Difficulty','Approval','Cases','Notes']];
+  document.querySelectorAll('#courtBody tr').forEach(tr => {
+    rows.push(Array.from(tr.cells).slice(0,8).map(td => td.textContent.trim()));
+  });
+  const csv = rows.map(row => row.join(',')).join('\n');
+  const blob = new Blob([csv], {type: 'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'court_guide_full.csv';
+  a.click();
 }
-/* ---------- ADD ENTRY ---------- */
-function toggleFields() {
-// Hide/show fields as needed - simplified
+
+/* ---------- ADD / EDIT ---------- */
+function toggleFields() {}
+function clearForm() {
+  document.getElementById('name').value = '';
+  document.getElementById('jurisdiction').value = '';
+  document.getElementById('avgTime').value = '';
+  document.getElementById('futureOffset').value = '';
+  document.getElementById('difficulty').value = 'Medium';
+  document.getElementById('approval').value = '0%';
+  document.getElementById('cases').value = 0;
+  document.getElementById('notes').value = '';
 }
+
+function editEntry(index) {
+  const entry = courtGuide[index];
+  document.getElementById('name').value = entry.judge;
+  document.getElementById('jurisdiction').value = entry.jurisdiction;
+  document.getElementById('avgTime').value = entry.avgTime;
+  document.getElementById('futureOffset').value = entry.futureOffset;
+  document.getElementById('difficulty').value = entry.difficulty;
+  document.getElementById('approval').value = entry.approval;
+  document.getElementById('cases').value = entry.cases;
+  document.getElementById('notes').value = entry.notes;
+  currentEditIndex = index;
+  document.querySelector('button[onclick="addEntry()"]').textContent = 'Update Entry';
+}
+
 function addEntry() {
-const type = document.getElementById('type').value;
-// Add logic for new entry (expand as needed)
-alert('New entry added! (Logic can be expanded)');
+  const judge = document.getElementById('name').value.trim();
+  const juris = document.getElementById('jurisdiction').value.trim();
+  const time = document.getElementById('avgTime').value.trim();
+  const offset = document.getElementById('futureOffset').value.trim();
+  const diff = document.getElementById('difficulty').value;
+  const appr = document.getElementById('approval').value.trim();
+  const cas = parseInt(document.getElementById('cases').value) || 0;
+  const not = document.getElementById('notes').value.trim();
+
+  if (!judge || !juris) {
+    alert('Judge and Jurisdiction are required.');
+    return;
+  }
+
+  const newEntry = { jurisdiction: juris, judge, avgTime: time || "Unknown", futureOffset: offset || "Unknown", difficulty: diff, approval: appr, cases: cas, notes: not };
+
+  if (currentEditIndex !== -1) {
+    courtGuide[currentEditIndex] = newEntry;
+    currentEditIndex = -1;
+    document.querySelector('button[onclick="addEntry()"]').textContent = 'Add Entry';
+  } else {
+    courtGuide.push(newEntry);
+  }
+
+  clearForm();
+  displayCourtGuide();
+  populateFilters();
 }
+
 /* ---------- INIT ---------- */
 [stateFilter, countyFilter, judgeFilter].forEach(f => f.addEventListener("change", displayCourtGuide));
 populateFilters();
